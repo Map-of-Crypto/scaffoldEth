@@ -1,3 +1,4 @@
+import { ethers } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -5,10 +6,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments } = hre;
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  await deploy('YourContract', {
+  await deploy('Operator', {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    // args: ["Hello"],
+    args: ['0xa36085F69e2889c224210F603D836748e7dC0088', '0xED0262718A77e09C3C8F48696791747E878a5551'],
     log: true,
   });
 
@@ -21,7 +22,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   */
 };
 export default func;
-func.tags = ['YourContract'];
+func.tags = ['LocatorCar'];
 
 /*
 Tenderly verification

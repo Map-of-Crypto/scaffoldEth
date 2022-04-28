@@ -441,6 +441,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@chainlink/contracts@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@chainlink/contracts@npm:0.4.0"
+  checksum: 2c72f6d8ddb05cc8de348482aff67a24f90ebd2018477ef39922a25220593ad73149520a5653d48096e7f58d09a0fd66a56e2c8d47deacd3a593b3d087721b54
+  languageName: node
+  linkType: hard
+
 "@cspotcode/source-map-consumer@npm:0.8.0":
   version: 0.8.0
   resolution: "@cspotcode/source-map-consumer@npm:0.8.0"
@@ -1765,6 +1772,7 @@ __metadata:
   resolution: "@scaffold-eth/hardhat@workspace:packages/hardhat-ts"
   dependencies:
     "@atixlabs/hardhat-time-n-mine": ^0.0.5
+    "@chainlink/contracts": ^0.4.0
     "@defi-wonderland/smock": ^2.0.7
     "@eth-optimism/hardhat-ovm": ^0.2.4
     "@ethereum-waffle/ens": ^3.3.1
