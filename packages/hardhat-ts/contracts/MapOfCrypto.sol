@@ -18,9 +18,28 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   bytes public _bytes;
 
+  bytes32 public firstData;
+
+  struct RequestedPurchase {
+    bool paid;
+    uint256 productId;
+    bool confirmed;
+  }
+
+  RequestedPurchase[] public requestedPurchaseList;
+
   constructor(address _oracle) ConfirmedOwner(msg.sender) {
     setPublicChainlinkToken();
     setChainlinkOracle(_oracle);
+    // For testing lets make two products that both require payment and one that doesnt need
+
+    requestedPurchaseList.push(RequestedPurchase(false, 1, true));
+    requestedPurchaseList.push(RequestedPurchase(false, 2, true));
+    requestedPurchaseList.push(RequestedPurchase(false, 3, false));
+  }
+
+  function returnRequestedPurchaseList() public view returns (RequestedPurchase[] memory) {
+    return requestedPurchaseList;
   }
 
   function makePurchaseRequest(
@@ -49,7 +68,19 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     // * set up chainlink keeper to call completePurchaseRequest when the tracking status is "delivered"
   }
 
-  function fullfillDeliveredTransactions(bytes32 _requestId, bytes memory bytesResponse) public {
+  // GET API Chainlink
+
+  function getDeliveredTransactions() public {
+    // Return here a list of all the transactions that need funding (the recipient addreses that should receive money because status = delivred)
+    // Chainlink request to our api
+    string memory jobId = "";
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(jobId), address(this), this.fullfillDeliveredTransactions.selector);
+    req.add("get", "https://mapofcrypto-cdppi36oeq-uc.a.run.app/trackingNeedFunding");
+
+    sendOperatorRequest(req, ORACLE_PAYMENT);
+  }
+
+  function fullfillDeliveredTransactions(bytes32 _requestId, bytes memory bytesResponse) public recordChainlinkFulfillment(_requestId) {
     // fetch the response data from our api
     // decode here the bytesResponse
     // check on chain for our struct of transactions with status deliverd = false and accepted
@@ -57,15 +88,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     // return list()
   }
 
-  // GET API Chainlink
-
-  function getDeliveredTransactions() public {
-    // Return here a list of all the transactions that need funding (the recipient addreses that should receive money because status = delivred)
-    // Chainlink request to our api
-    // Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fullfillDeliveredTransactions.selector);
-    // req.add("get", "https://martelaxe90-cdppi36oeq-ue.a.run.app/trackingAPI");
-    // req.add("path", "TODO");
-    // sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
+  function cronExecution(bytes32 data) public {
+    firstData = data;
   }
 
   function getDataMerchantAPI(
@@ -116,9 +140,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     )
   {
     //Check the delivery API -> see the whole list of transactions and check if any has status delivered and hasnt been paid on chain
-    // getDeliveredTransactions()
+    // getDeliveredTransactions();
     // if any then upkeepNeeded = true
-    // performData = the list of transactions
   }
 
   // When the keeper register detects taht we need to do a performUpKeep
