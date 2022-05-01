@@ -18,6 +18,10 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   bytes public _bytes;
 
+  uint256[] public _list;
+
+  bool public test;
+
   bytes32 public firstData;
 
   struct RequestedPurchase {
@@ -25,6 +29,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     uint256 productId;
     bool confirmed;
   }
+
+  bytes public needFunding;
 
   RequestedPurchase[] public requestedPurchaseList;
 
@@ -40,6 +46,10 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   function returnRequestedPurchaseList() public view returns (RequestedPurchase[] memory) {
     return requestedPurchaseList;
+  }
+
+  function returnListFunding() public view returns (uint256[] memory) {
+    return _list;
   }
 
   function makePurchaseRequest(
@@ -73,11 +83,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   function getDeliveredTransactions() public {
     // Return here a list of all the transactions that need funding (the recipient addreses that should receive money because status = delivred)
     // Chainlink request to our api
-    string memory jobId = "";
-    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(jobId), address(this), this.fullfillDeliveredTransactions.selector);
-    req.add("get", "https://mapofcrypto-cdppi36oeq-uc.a.run.app/trackingNeedFunding");
 
-    sendOperatorRequest(req, ORACLE_PAYMENT);
+    test = true;
   }
 
   function fullfillDeliveredTransactions(bytes32 _requestId, bytes memory bytesResponse) public recordChainlinkFulfillment(_requestId) {
@@ -88,8 +95,12 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     // return list()
   }
 
-  function cronExecution(bytes32 data) public {
-    firstData = data;
+  function cronExecution(bytes memory data) public {
+    needFunding = data;
+
+    uint256[] memory list = abi.decode(data, (uint256[]));
+
+    _list = list;
   }
 
   function getDataMerchantAPI(
@@ -127,7 +138,6 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   /// Keeper functions
 
-  // check when a a delivery has been finished -> this is sent off chain to the keepers register
   function checkUpkeep(
     bytes calldata /* checkData */
   )
@@ -139,9 +149,9 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
       bytes memory /* performData */
     )
   {
-    //Check the delivery API -> see the whole list of transactions and check if any has status delivered and hasnt been paid on chain
-    // getDeliveredTransactions();
-    // if any then upkeepNeeded = true
+    if (_list.length > 0) {
+      upkeepNeeded = true;
+    }
   }
 
   // When the keeper register detects taht we need to do a performUpKeep
@@ -152,6 +162,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     // return list of PurchaseRequests that need funding
     // make the transfers from our smart contract to the recipients according to the response
     // change status delivered= true in our struct
+    // we will get the relationship between productId Address and fundingNeeded
+    // do transfer and then change status Paid from the object
   }
 
   // UTILS
