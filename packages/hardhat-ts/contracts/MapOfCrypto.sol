@@ -8,48 +8,33 @@ import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterface {
   using Chainlink for Chainlink.Request;
 
-  uint256 public monitors;
-
   uint256 private constant ORACLE_PAYMENT = (1 * LINK_DIVISIBILITY) / 10;
 
-  bytes32 public currency;
-
-  uint256 public price;
-
-  bytes public _bytes;
-
-  uint256[] public _list;
-
-  bool public test;
-
-  bytes32 public firstData;
-
-  struct RequestedPurchase {
-    bool paid;
+  struct Purchase {
+    uint256 purchaseId;
     uint256 productId;
-    bool confirmed;
+    address merchantAddress;
+    address buyerAddress;
+    bool paid;
+    bool accepted;
+    bool expired;
+    uint256 deadline;
+    uint256 eth_amount;
   }
 
-  bytes public needFunding;
+  mapping(uint256 => uint256) purchaseIdToPrice;
+  mapping(address => uint256) balances;
+  mapping(bytes32 => address) requestIdToBuyer;
+  mapping(uint256 => string) purchaseToDeliveryId;
 
-  RequestedPurchase[] public requestedPurchaseList;
+  mapping(uint256 => Purchase) purchases;
+  uint256 purchaseCounter;
 
-  constructor(address _oracle) ConfirmedOwner(msg.sender) {
+  constructor() ConfirmedOwner(msg.sender) {
     setPublicChainlinkToken();
+    address _oracle;
     setChainlinkOracle(_oracle);
     // For testing lets make two products that both require payment and one that doesnt need
-
-    requestedPurchaseList.push(RequestedPurchase(false, 1, true));
-    requestedPurchaseList.push(RequestedPurchase(false, 2, true));
-    requestedPurchaseList.push(RequestedPurchase(false, 3, false));
-  }
-
-  function returnRequestedPurchaseList() public view returns (RequestedPurchase[] memory) {
-    return requestedPurchaseList;
-  }
-
-  function returnListFunding() public view returns (uint256[] memory) {
-    return _list;
   }
 
   function makePurchaseRequest(
@@ -62,12 +47,25 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     // * make sure that the sent amount is at least the amount required for the product including shipping to target country (using Chainlink conversion data)
     // * set a deadline for the merchant to accept the request, otherwise money is refunded
     // * save the purchaseRequest in the contract, so the merchant can accept it
+
+    bytes32 requestId = getDataMerchantAPI(merchantId, productId);
+
+    // Saving the amount that user sent to contract
+    balances[msg.sender] = msg.value;
+
+    //saving the address of the buyer
+    requestIdToBuyer[requestId] = msg.sender;
   }
 
-  function acceptPurchaseRequest(uint256 requestId) public {
+  function acceptPurchaseRequest(uint256 purchaseId) public {
     // * ensure that the merchant accepting the request is the one for which the request was made
     // * set a deadline until which the request must be fulfilled, otherwise money is refunded (more generous deadline than before accepting)
-    // Set the status of requests = accepted with status delivered = false
+
+    require(purchases[purchaseId].merchantAddress == msg.sender, "Only merchant can accept request");
+
+    // one week for bigger deadline
+    purchases[purchaseId].deadline = block.timestamp + 1 weeks;
+    purchases[purchaseId].accepted = true;
   }
 
   function fulfillPurchaseRequest(uint256 requestId, string memory packageTrackingNumber) public {
@@ -76,64 +74,73 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     // * convert the amount to be sent to the merchant now and store it in the request. this is important because we want to send the correct
     //   amount of ether _at the time of purchase in the store_ and not at the time of shipping
     // * set up chainlink keeper to call completePurchaseRequest when the tracking status is "delivered"
+    // TODO lets define if we need this
+    require(purchases[requestId].merchantAddress == msg.sender);
+    purchaseToDeliveryId[requestId] = packageTrackingNumber;
   }
 
-  // GET API Chainlink
+  //  API CRON CHAINLINK
+  function getNeedFunding(bytes memory data) public {
+    // This function will return a list of purchases that need funding
+    // This list gets constructed in the external adapter
+    // reads all the purchases on blockchain with accepted = true and paid  = false and compares  with deliverd API if any is delivered
+    // if delivered = true and paid = false then it is added to list and is sent to this function
 
-  function getDeliveredTransactions() public {
-    // Return here a list of all the transactions that need funding (the recipient addreses that should receive money because status = delivred)
-    // Chainlink request to our api
+    uint256[] memory purchaseNeedFunding = abi.decode(data, (uint256[]));
 
-    test = true;
+    for (uint256 i = 0; i < purchaseNeedFunding.length; i++) {
+      address buyer = purchases[purchaseNeedFunding[i]].buyerAddress;
+      address merchant = purchases[purchaseNeedFunding[i]].merchantAddress;
+      uint256 eth_amount = purchases[purchaseNeedFunding[i]].eth_amount;
+
+      (bool success, ) = merchant.call{ value: eth_amount }("");
+      require(success, "Withdrawal failed.");
+      balances[buyer] = balances[buyer] - eth_amount;
+      // transfer to merchantAddress
+    }
+    // transfer from the balances[eth_amount]
   }
 
-  function fullfillDeliveredTransactions(bytes32 _requestId, bytes memory bytesResponse) public recordChainlinkFulfillment(_requestId) {
-    // fetch the response data from our api
-    // decode here the bytesResponse
-    // check on chain for our struct of transactions with status deliverd = false and accepted
-    // If api returns that delivered = true then save the list of address recipients as needs funding
-    // return list()
-  }
-
-  function cronExecution(bytes memory data) public {
-    needFunding = data;
-
-    uint256[] memory list = abi.decode(data, (uint256[]));
-
-    _list = list;
-  }
-
+  // GET API DIRECT REQUEST Chainlink
   function getDataMerchantAPI(
-    string memory jobId,
+    // string memory jobId,
     uint256 merchantId,
     uint256 productId
-  ) public {
+  ) public returns (bytes32) {
     // Chainlink request to datamerchant API
 
-    // string memory jobId = "42754ae13e534700b9ba848fc8462523";
+    string memory jobId;
 
     Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(jobId), address(this), this.fullfillMerchantAPI.selector);
 
     string memory productURL = string(abi.encodePacked("https://mapofcrypto-cdppi36oeq-uc.a.run.app/products/", toString(productId)));
-    // string memory merchantURL = string(abi.encodePacked("https://mapofcrypto-cdppi36oeq-uc.a.run.app/merchants/",toString(merchantId)));
+    string memory merchantURL = string(abi.encodePacked("https://mapofcrypto-cdppi36oeq-uc.a.run.app/merchants/", toString(merchantId)));
 
     req.add("productURL", productURL);
-    // req.add("merchantURL",merchantURL);
+    req.add("merchantURL", merchantURL);
 
-    sendOperatorRequest(req, ORACLE_PAYMENT);
+    return sendOperatorRequest(req, ORACLE_PAYMENT);
   }
 
   function fullfillMerchantAPI(
     bytes32 _requestId,
     bytes32 _currency,
-    uint256 _price
+    address _merchantAddress,
+    uint256 _price,
+    uint256 productId
   ) public recordChainlinkFulfillment(_requestId) {
-    //  decode the byetesResponse
-    // make a struct with the requests on chain using the data from the API
-    // fulfillPurchaseRequest()
+    // TODO USE  currency + price with chainlink Oracle to get amount in ETH
 
-    currency = _currency;
-    price = _price;
+    uint256 eth_amount;
+    uint256 buyerBalance = balances[requestIdToBuyer[_requestId]];
+
+    require(buyerBalance >= eth_amount, "You don't have enough ether deposited in the contract");
+
+    // save in mapping relation of request Purchase Id and its price
+    uint256 purchaseId = purchaseCounter++;
+    purchaseIdToPrice[purchaseId] = eth_amount;
+    // we add one day for deadLine
+    purchases[purchaseId] = Purchase(purchaseId, productId, _merchantAddress, requestIdToBuyer[_requestId], false, false, false, 0, block.timestamp + 1 days);
   }
 
   /// Keeper functions
@@ -149,21 +156,30 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
       bytes memory /* performData */
     )
   {
-    if (_list.length > 0) {
-      upkeepNeeded = true;
-    }
+    // TODO CHECK ALL THE DEADLINES of all the PURCHASES IF THEY HAVE BEEN REACHED
   }
 
   // When the keeper register detects taht we need to do a performUpKeep
   function performUpkeep(
     bytes calldata /* performData */
   ) external override {
-    // validate here for malicious keepers so we will call getDeliveredTransactions again
-    // return list of PurchaseRequests that need funding
-    // make the transfers from our smart contract to the recipients according to the response
-    // change status delivered= true in our struct
-    // we will get the relationship between productId Address and fundingNeeded
-    // do transfer and then change status Paid from the object
+    // validate here for malicious keepers
+    //
+    // TODO make list of all the purchases that are expired
+
+    uint256[] memory expiredPurchases;
+
+    for (uint256 i = 0; i < expiredPurchases.length; i++) {
+      address buyer = purchases[expiredPurchases[i]].buyerAddress;
+      uint256 eth_amount = purchases[expiredPurchases[i]].eth_amount;
+
+      purchases[expiredPurchases[i]].expired = true;
+
+      (bool success, ) = buyer.call{ value: eth_amount }("");
+      require(success, "Withdrawal failed.");
+      balances[buyer] = balances[buyer] - eth_amount;
+      // transfer to merchantAddress
+    }
   }
 
   // UTILS
@@ -199,9 +215,6 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   }
 
   function toString(uint256 value) internal pure returns (string memory) {
-    // Inspired by OraclizeAPI's implementation - MIT licence
-    // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
-
     if (value == 0) {
       return "0";
     }
