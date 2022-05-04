@@ -51,7 +51,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     bytes32 requestId = getDataMerchantAPI(merchantId, productId);
 
     // Saving the amount that user sent to contract
-    balances[msg.sender] = msg.value;
+    balances[msg.sender] += msg.value;
 
     //saving the address of the buyer
     requestIdToBuyer[requestId] = msg.sender;
