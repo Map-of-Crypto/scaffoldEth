@@ -11,10 +11,10 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   uint256 private constant ORACLE_PAYMENT = (1 * LINK_DIVISIBILITY) / 10;
   uint256 private constant batchSize = 20;
+  uint256 public constant timeout = 1 minutes;
   string private jobId;
 
   struct Purchase {
-    uint256 purchaseId;
     uint256 productId;
     address merchantAddress;
     address buyerAddress;
@@ -71,7 +71,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     require(purchases[purchaseId].ethFunded + msg.value <= purchases[purchaseId].ethPrice, "Cannot fund the purchase beyond the price!");
 
     purchases[purchaseId].ethFunded += msg.value;
-    purchases[purchaseId].deadline = block.timestamp + 1 weeks;
+    purchases[purchaseId].deadline = block.timestamp + timeout;
   }
 
   function acceptPurchaseRequest(uint256 purchaseId) public {
@@ -84,7 +84,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     require(isPurchaseFunded(purchaseId), "Cannot accept a purchase that is not funded!");
 
     purchases[purchaseId].accepted = true;
-    purchases[purchaseId].deadline = block.timestamp + 1 weeks;
+    purchases[purchaseId].deadline = block.timestamp + timeout;
   }
 
   function fulfillPurchaseRequest(uint256 purchaseId, string memory packageTrackingNumber) public {
@@ -153,7 +153,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     uint256 ethPrice = (_price * (10**4) * (10**18)) / uint256(price);
     purchase.ethPrice = ethPrice;
 
-    purchase.deadline = block.timestamp + 1 weeks;
+    purchase.deadline = block.timestamp + timeout;
 
     delete requestToPurchase[_requestId];
   }
@@ -264,7 +264,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   }
 
   function isPurchaseExpired(uint256 purchaseId) private view returns (bool) {
-    return purchases[purchaseId].deadline < block.timestamp;
+    return purchases[purchaseId].deadline >= block.timestamp;
   }
 
   function isPurchaseFunded(uint256 purchaseId) private view returns (bool) {
