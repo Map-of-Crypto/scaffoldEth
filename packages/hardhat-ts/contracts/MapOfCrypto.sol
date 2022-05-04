@@ -94,7 +94,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
       uint256 eth_amount = purchases[purchaseNeedFunding[i]].eth_amount;
 
       (bool success, ) = merchant.call{ value: eth_amount }("");
-      require(success, "Withdrawal failed");
+      require(success, "Withdrawal failed.");
       balances[buyer] = balances[buyer] - eth_amount;
       // transfer to merchantAddress
     }
@@ -131,13 +131,13 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   ) public recordChainlinkFulfillment(_requestId) {
     // TODO USE  currency + price with chainlink Oracle to get amount in ETH
 
-    uint256 eth_amount;
+    uint256 eth_amount = 0.001 ether; // for testing
     uint256 buyerBalance = balances[requestIdToBuyer[_requestId]];
 
     require(buyerBalance >= eth_amount, "You don't have enough ether deposited in the contract");
 
     // save in mapping relation of request Purchase Id and its price
-    uint256 purchaseId = purchaseCounter++;
+    uint256 purchaseId = purchaseCounter++ - 1; // 1 or no?
     purchaseIdToPrice[purchaseId] = eth_amount;
     // we add one day for deadLine
     purchases[purchaseId] = Purchase(purchaseId, productId, _merchantAddress, requestIdToBuyer[_requestId], false, false, false, 0, block.timestamp + 1 days);
@@ -183,6 +183,20 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   }
 
   // UTILS
+
+  function getPurchaseList() public view returns (Purchase[] memory) {
+    Purchase[] memory purchaseList = new Purchase[](purchaseCounter + 1);
+
+    for (uint256 i = 0; i < purchaseCounter; i++) {
+      purchaseList[i] = purchases[i];
+    }
+
+    return purchaseList;
+  }
+
+  receive() external payable {
+    balances[msg.sender] += msg.value;
+  }
 
   function getChainlinkToken() public view returns (address) {
     return chainlinkTokenAddress();
