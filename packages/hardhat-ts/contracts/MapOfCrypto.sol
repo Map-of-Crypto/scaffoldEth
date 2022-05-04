@@ -171,7 +171,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
         if (newLowestPurchaseId == 0) {
           newLowestPurchaseId = i;
         }
-        if (purchases[i].deadline >= block.timestamp) {
+        if (isPurchaseExpired(i)) {
           purchasesToCheck[k++] = i;
         }
       }
@@ -264,7 +264,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   }
 
   function isPurchaseExpired(uint256 purchaseId) private view returns (bool) {
-    return purchases[purchaseId].deadline >= block.timestamp;
+    return purchases[purchaseId].deadline < block.timestamp;
   }
 
   function isPurchaseFunded(uint256 purchaseId) private view returns (bool) {
