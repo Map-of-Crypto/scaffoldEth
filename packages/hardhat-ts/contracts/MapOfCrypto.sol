@@ -94,7 +94,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
       uint256 eth_amount = purchases[purchaseNeedFunding[i]].eth_amount;
 
       (bool success, ) = merchant.call{ value: eth_amount }("");
-      require(success, "Withdrawal failed.");
+      require(success, "Withdrawal failed");
       balances[buyer] = balances[buyer] - eth_amount;
       // transfer to merchantAddress
     }
