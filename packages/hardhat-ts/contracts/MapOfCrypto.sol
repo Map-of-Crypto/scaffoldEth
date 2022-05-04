@@ -153,6 +153,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     uint256 ethPrice = (_price * (10**4) * (10**18)) / uint256(price);
     purchase.ethPrice = ethPrice;
 
+    purchase.deadline = block.timestamp + 1 weeks;
+
     delete requestToPurchase[_requestId];
   }
 
@@ -240,7 +242,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   }
 
   function getPurchaseList() public view returns (Purchase[] memory) {
-    Purchase[] memory purchaseList = new Purchase[](purchaseCounter + 1);
+    Purchase[] memory purchaseList = new Purchase[](purchaseCounter);
 
     for (uint256 i = 0; i < purchaseCounter; i++) {
       purchaseList[i] = purchases[i];
