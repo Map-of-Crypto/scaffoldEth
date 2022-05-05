@@ -11,7 +11,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   uint256 private constant ORACLE_PAYMENT = (1 * LINK_DIVISIBILITY) / 10;
   uint256 private constant batchSize = 20;
-  uint256 public constant timeout = 10 minutes;
+  uint256 public constant timeout = 1 minutes;
   string private jobId;
   string private jobExternalAdapter;
 
@@ -37,17 +37,18 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   AggregatorV3Interface internal ethUsdFeed;
 
-  constructor(
-    address _oracle,
+  constructor()
+    /*address _oracle,
     address _ethUsdFeed,
     string memory _jobId,
-    string memory _jobExternalAdapter
-  ) ConfirmedOwner(msg.sender) {
-    setPublicChainlinkToken();
-    setChainlinkOracle(_oracle);
-    ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
-    jobId = _jobId;
-    jobExternalAdapter = _jobExternalAdapter;
+    string memory _jobExternalAdapter*/
+    ConfirmedOwner(msg.sender)
+  {
+    // setPublicChainlinkToken();
+    // setChainlinkOracle(_oracle);
+    // ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
+    // jobId = _jobId;
+    // jobExternalAdapter = _jobExternalAdapter;
   }
 
   function makePurchaseRequest(uint256 merchantId, uint256 productId) public payable {
@@ -62,11 +63,11 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     newPurchase.purchaseId = purchaseId;
     newPurchase.buyerAddress = msg.sender;
     newPurchase.ethFunded = msg.value;
-    newPurchase.deadline = 2**256 - 1; // MAX_UINT as deadline to prevent cleanup before Chainlink request returns
+    //newPurchase.deadline = 2**256 - 1; // MAX_UINT as deadline to prevent cleanup before Chainlink request returns
 
-    bytes32 requestId = getDataMerchantAPI(merchantId, productId);
+    //bytes32 requestId = getDataMerchantAPI(merchantId, productId);
 
-    requestToPurchase[requestId] = purchaseId;
+    //requestToPurchase[requestId] = purchaseId;
   }
 
   function fundPurchase(uint256 purchaseId) public payable {
@@ -199,15 +200,19 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     }
 
     if (k != 0 || newLowestPurchaseId > lowestPurchaseId) {
-      return (true, abi.encode(newLowestPurchaseId, purchasesToCheck, k));
+      return (true, abi.encode(newLowestPurchaseId, k, purchasesToCheck));
     }
 
     return (false, abi.encode(0));
   }
 
+  event CheckPurchase(uint256);
+  event KValue(uint256);
+
   // When the keeper register detects taht we need to do a performUpKeep
   function performUpkeep(bytes calldata performData) external override {
-    (uint256 newLowestPurchase, uint256[] memory purchasesToCheck, uint256 k) = abi.decode(performData, (uint256, uint256[], uint256));
+    // TODO find a way to make batch size configurable here
+    (uint256 newLowestPurchase, uint256 k, uint256[20] memory purchasesToCheck) = abi.decode(performData, (uint256, uint256, uint256[20]));
 
     for (uint256 i = lowestPurchaseId; i < newLowestPurchase; ++i) {
       if (purchaseExists(i)) {
@@ -217,8 +222,9 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     }
 
     lowestPurchaseId = newLowestPurchase;
-
+    emit KValue(k);
     for (uint256 i = 0; i < k; ++i) {
+      emit CheckPurchase(purchasesToCheck[i]);
       if (isPurchaseExpired(purchasesToCheck[i])) {
         Purchase storage purchase = purchases[purchasesToCheck[i]];
         balances[purchase.buyerAddress] += purchase.ethFunded;
