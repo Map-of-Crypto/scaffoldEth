@@ -62,6 +62,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     newPurchase.purchaseId = purchaseId;
     newPurchase.buyerAddress = msg.sender;
     newPurchase.ethFunded = msg.value;
+    newPurchase.deadline = 2**256 - 1; // MAX_UINT as deadline to prevent cleanup before Chainlink request returns
 
     bytes32 requestId = getDataMerchantAPI(merchantId, productId);
 
