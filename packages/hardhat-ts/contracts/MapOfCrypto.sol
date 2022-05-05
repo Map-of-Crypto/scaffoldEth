@@ -182,12 +182,14 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     bytes calldata /* checkData */
   ) external view override returns (bool upkeepNeeded, bytes memory performData) {
     uint256 newLowestPurchaseId;
+    bool lowestPurchaseFound;
     uint256[batchSize] memory purchasesToCheck;
     uint256 k = 0;
     for (uint256 i = lowestPurchaseId; i < purchaseCounter && k < batchSize; ++i) {
       if (purchaseExists(i)) {
-        if (newLowestPurchaseId == 0) {
+        if (!lowestPurchaseFound) {
           newLowestPurchaseId = i;
+          lowestPurchaseFound = true;
         }
         if (isPurchaseExpired(i)) {
           purchasesToCheck[k++] = i;
