@@ -220,10 +220,10 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
     for (uint256 i = 0; i < k; ++i) {
       if (isPurchaseExpired(purchasesToCheck[i])) {
-        Purchase storage purchase = purchases[i];
+        Purchase storage purchase = purchases[purchasesToCheck[i]];
         balances[purchase.buyerAddress] += purchase.ethFunded;
 
-        delete purchases[i];
+        delete purchases[purchasesToCheck[i]];
       }
     }
   }
