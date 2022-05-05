@@ -262,7 +262,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   function getPurchaseList() public view returns (Purchase[] memory) {
     Purchase[] memory purchaseList = new Purchase[](purchaseCounter);
 
-    for (uint256 i = 0; i < purchaseCounter; i++) {
+    for (uint256 i = lowestPurchaseId; i < purchaseCounter; i++) {
       purchaseList[i] = purchases[i];
     }
 
