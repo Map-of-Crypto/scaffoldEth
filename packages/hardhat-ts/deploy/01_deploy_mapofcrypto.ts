@@ -9,7 +9,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await deploy('MapOfCrypto', {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    args: ['0x74d40EAE0E54Ea30178625c111CEDBf9069e6189', '0x9326BFA02ADD2366b30bacB125260Af641031331', 'e36caa3ff82e4ad6b6df65b01c6382b7'],
+    args: ['0x74d40EAE0E54Ea30178625c111CEDBf9069e6189', '0x9326BFA02ADD2366b30bacB125260Af641031331', 'e36caa3ff82e4ad6b6df65b01c6382b7', '66853ba406694258ab477e707675f0fa'],
     log: true,
   });
 

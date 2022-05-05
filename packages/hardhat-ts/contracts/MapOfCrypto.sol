@@ -11,11 +11,12 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   uint256 private constant ORACLE_PAYMENT = (1 * LINK_DIVISIBILITY) / 10;
   uint256 private constant batchSize = 20;
-  uint256 public constant timeout = 1 minutes;
+  uint256 public constant timeout = 10 minutes;
   string private jobId;
+  string private jobExternalAdapter;
 
   struct Purchase {
-    uint256 productId;
+    uint256 purchaseId;
     address merchantAddress;
     address buyerAddress;
     bool accepted;
@@ -24,6 +25,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     uint256 ethFunded;
     string trackingNumber;
   }
+
+  event Payment(address merchantAddress, uint256 ethPrice);
 
   mapping(address => uint256) balances;
   mapping(bytes32 => uint256) requestToPurchase;
@@ -37,12 +40,14 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   constructor(
     address _oracle,
     address _ethUsdFeed,
-    string memory _jobId
+    string memory _jobId,
+    string memory _jobExternalAdapter
   ) ConfirmedOwner(msg.sender) {
     setPublicChainlinkToken();
     setChainlinkOracle(_oracle);
     ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
     jobId = _jobId;
+    jobExternalAdapter = _jobExternalAdapter;
   }
 
   function makePurchaseRequest(uint256 merchantId, uint256 productId) public payable {
@@ -54,7 +59,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
     uint256 purchaseId = purchaseCounter++;
     Purchase storage newPurchase = purchases[purchaseId];
-    newPurchase.productId = productId;
+    newPurchase.purchaseId = purchaseId;
     newPurchase.buyerAddress = msg.sender;
     newPurchase.ethFunded = msg.value;
 
@@ -99,27 +104,34 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     purchases[purchaseId].trackingNumber = packageTrackingNumber;
   }
 
-  // TODO API CRON CHAINLINK
-  // function getNeedFunding(bytes memory data) public {
-  //   // This function will return a list of purchases that need funding
-  //   // This list gets constructed in the external adapter
-  //   // reads all the purchases on blockchain with accepted = true and paid  = false and compares  with deliverd API if any is delivered
-  //   // if delivered = true and paid = false then it is added to list and is sent to this function
+  // API CRON CHAINLINK
+  function checkNeedPayment(bytes memory data) public {
+    uint256[] memory needPayment = abi.decode(data, (uint256[]));
 
-  //   uint256[] memory purchaseNeedFunding = abi.decode(data, (uint256[]));
+    if (needPayment.length > 0) {
+      //Here we re validate for another confirmation
+      getPurchasesToPay();
+    }
+  }
 
-  //   for (uint256 i = 0; i < purchaseNeedFunding.length; i++) {
-  //     address buyer = purchases[purchaseNeedFunding[i]].buyerAddress;
-  //     address merchant = purchases[purchaseNeedFunding[i]].merchantAddress;
-  //     uint256 eth_amount = purchases[purchaseNeedFunding[i]].eth_amount;
+  //External adapter get direct request
 
-  //     (bool success, ) = merchant.call{ value: eth_amount }("");
-  //     require(success, "Withdrawal failed.");
-  //     balances[buyer] = balances[buyer] - eth_amount;
-  //     // transfer to merchantAddress
-  //   }
-  //   // transfer from the balances[eth_amount]
-  // }
+  function getPurchasesToPay() public {
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(jobExternalAdapter), address(this), this.fullfillPurchasesToPay.selector);
+
+    sendOperatorRequest(req, ORACLE_PAYMENT);
+  }
+
+  function fullfillPurchasesToPay(bytes32 _requestId, uint256[] memory purchaseNeedFunding) public recordChainlinkFulfillment(_requestId) {
+    for (uint256 i = 0; i < purchaseNeedFunding.length; i++) {
+      uint256 ethPrice = purchases[purchaseNeedFunding[i]].ethPrice;
+      address merchantAddress = purchases[purchaseNeedFunding[i]].merchantAddress;
+      emit Payment(merchantAddress, ethPrice);
+      delete purchases[purchaseNeedFunding[i]];
+      (bool success, ) = merchantAddress.call{ value: ethPrice }("");
+      require(success == true, "Failed distribution");
+    }
+  }
 
   // GET API DIRECT REQUEST Chainlink
   function getDataMerchantAPI(uint256 merchantId, uint256 productId) public returns (bytes32) {
