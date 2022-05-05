@@ -37,18 +37,17 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   AggregatorV3Interface internal ethUsdFeed;
 
-  constructor()
-    /*address _oracle,
+  constructor(
+    address _oracle,
     address _ethUsdFeed,
     string memory _jobId,
-    string memory _jobExternalAdapter*/
-    ConfirmedOwner(msg.sender)
-  {
-    // setPublicChainlinkToken();
-    // setChainlinkOracle(_oracle);
-    // ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
-    // jobId = _jobId;
-    // jobExternalAdapter = _jobExternalAdapter;
+    string memory _jobExternalAdapter
+  ) ConfirmedOwner(msg.sender) {
+    setPublicChainlinkToken();
+    setChainlinkOracle(_oracle);
+    ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
+    jobId = _jobId;
+    jobExternalAdapter = _jobExternalAdapter;
   }
 
   function makePurchaseRequest(uint256 merchantId, uint256 productId) public payable {
@@ -63,11 +62,11 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     newPurchase.purchaseId = purchaseId;
     newPurchase.buyerAddress = msg.sender;
     newPurchase.ethFunded = msg.value;
-    //newPurchase.deadline = 2**256 - 1; // MAX_UINT as deadline to prevent cleanup before Chainlink request returns
+    newPurchase.deadline = 2**256 - 1; // MAX_UINT as deadline to prevent cleanup before Chainlink request returns
 
-    //bytes32 requestId = getDataMerchantAPI(merchantId, productId);
+    bytes32 requestId = getDataMerchantAPI(merchantId, productId);
 
-    //requestToPurchase[requestId] = purchaseId;
+    requestToPurchase[requestId] = purchaseId;
   }
 
   function fundPurchase(uint256 purchaseId) public payable {
