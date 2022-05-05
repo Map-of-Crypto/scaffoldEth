@@ -11,7 +11,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   uint256 private constant ORACLE_PAYMENT = (1 * LINK_DIVISIBILITY) / 10;
   uint256 private constant batchSize = 20;
-  uint256 public constant timeout = 1 minutes;
+  uint256 public constant timeout = 10 minutes;
   string private jobId;
   string private jobExternalAdapter;
 
