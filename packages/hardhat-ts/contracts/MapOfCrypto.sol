@@ -88,7 +88,13 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     require(!isPurchaseExpired(purchaseId), "Cannot accept an expired purchase!");
     require(isPurchaseFunded(purchaseId), "Cannot accept a purchase that is not funded!");
 
-    purchases[purchaseId].accepted = true;
+    Purchase storage purchase = purchases[purchaseId];
+
+    purchase.accepted = true;
+    balances[purchase.buyerAddress] += purchase.ethFunded - purchase.ethPrice;
+
+    purchase.ethFunded = purchase.ethPrice;
+
     purchases[purchaseId].deadline = block.timestamp + timeout;
   }
 
@@ -128,8 +134,8 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
       address merchantAddress = purchases[purchaseNeedFunding[i]].merchantAddress;
       emit Payment(merchantAddress, ethPrice);
       delete purchases[purchaseNeedFunding[i]];
-      (bool success, ) = merchantAddress.call{ value: ethPrice }("");
-      require(success == true, "Failed distribution");
+
+      balances[merchantAddress] += ethPrice;
     }
   }
 
