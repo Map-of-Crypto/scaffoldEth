@@ -28,10 +28,10 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
 
   event Payment(address merchantAddress, uint256 ethPrice);
 
-  mapping(address => uint256) balances;
+  mapping(address => uint256) public balances;
   mapping(bytes32 => uint256) requestToPurchase;
 
-  mapping(uint256 => Purchase) purchases;
+  mapping(uint256 => Purchase) public purchases;
   uint256 purchaseCounter;
   uint256 lowestPurchaseId;
 
