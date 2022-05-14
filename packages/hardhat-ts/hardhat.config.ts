@@ -84,7 +84,8 @@ const config: HardhatUserConfig = {
       },
     },
     kovan: {
-      url: 'https://kovan.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad', // <---- YOUR INFURA ID! (or it won't work)
+      // url: 'https://kovan.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad', // <---- YOUR INFURA ID! (or it won't work)
+      url: 'https://kovan.infura.io/v3/6a3aa067404249f1bf4ae7828da0a854',
       accounts: {
         mnemonic: getMnemonic(),
       },
