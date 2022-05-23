@@ -4,13 +4,14 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import '~~/styles/main-page.css';
 
 import { GenericContract } from 'eth-components/ant/generic-contract';
-import { useBalance, useEthersAdaptorFromProviderOrSigners, useEventListener } from 'eth-hooks';
+import { useBalance, useEthersAdaptorFromProviderOrSigners } from 'eth-hooks';
 import { useEthersContext } from 'eth-hooks/context';
 import { useDexEthPrice } from 'eth-hooks/dapps';
 import { asEthersAdaptor } from 'eth-hooks/functions';
 
 import { MainPageMenu, MainPageContracts, MainPageFooter, MainPageHeader } from './components/main';
 import { useScaffoldHooksExamples as useScaffoldHooksExamples } from './components/main/hooks/useScaffoldHooksExamples';
+import Dashboard from './components/pages/dashboard/Dashboard';
 
 import { useBurnerFallback } from '~~/components/main/hooks/useBurnerFallback';
 import { useScaffoldProviders as useScaffoldAppProviders } from '~~/components/main/hooks/useScaffoldAppProviders';
@@ -71,7 +72,7 @@ export const Main: FC = () => {
   // -----------------------------
 
   // init contracts
-  const yourContract = useAppContracts('MapOfCrypto', ethersContext.chainId);
+  const mapOfCrypto = useAppContracts('MapOfCrypto', ethersContext.chainId);
   const mainnetDai = useAppContracts('DAI', NETWORKS.mainnet.chainId);
 
   // keep track of a variable from the contract in the local React state:
@@ -84,7 +85,7 @@ export const Main: FC = () => {
   // );
 
   // 📟 Listen for broadcast events
-  const [setPurposeEvents] = useEventListener(yourContract, 'SetPurpose', 0);
+  // const [setPurposeEvents] = useEventListener(mapOfCrypto, 'SetPurpose', 0);
 
   // -----------------------------
   // .... 🎇 End of examples
@@ -125,6 +126,13 @@ export const Main: FC = () => {
               mainnetProvider={scaffoldAppProviders.mainnetAdaptor?.provider}
               yourCurrentBalance={yourCurrentBalance}
               price={ethPrice}
+            />
+          </Route>
+          <Route path="/application">
+            <Dashboard
+            // mainnetProvider={scaffoldAppProviders.mainnetAdaptor?.provider}
+            // yourCurrentBalance={yourCurrentBalance}
+            // price={ethPrice}
             />
           </Route>
           <Route path="/mainnetdai">

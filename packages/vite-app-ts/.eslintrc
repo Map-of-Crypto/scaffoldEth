@@ -1,6 +1,11 @@
 {
   "parser": "@typescript-eslint/parser", // Specifies the ESLint parser
-  "ignorePatterns": ["**/*.pcss", "**/*.css", "**/*.less", "**/*.json"],
+  "ignorePatterns": [
+    "**/*.pcss",
+    "**/*.css",
+    "**/*.less",
+    "**/*.json"
+  ],
   "parserOptions": {
     "ecmaVersion": 2020, // Allows for the parsing of modern ECMAScript features
     "sourceType": "module", // Allows for the use of imports,
@@ -37,10 +42,20 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking"
   ],
-  "plugins": ["prettier", "react", "react-hooks", "unused-imports", "testing-library"],
+  "plugins": [
+    "prettier",
+    "react",
+    "react-hooks",
+    "unused-imports",
+    "testing-library"
+  ],
   "rules": {
-    "eqeqeq": ["error", "smart"],
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
     "react/jsx-wrap-multilines": "warn",
+    "react/jsx-key": "warn",
     "react/jsx-uses-react": "off",
     "react/react-in-jsx-scope": "off",
     "react/jsx-filename-extension": "off",
@@ -80,17 +95,31 @@
     "unused-imports/no-unused-imports-ts": "warn",
     "unused-imports/no-unused-vars-ts": [
       "warn",
-      { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "after-used",
+        "argsIgnorePattern": "^_"
+      }
     ],
-    "@typescript-eslint/no-use-before-define": ["error"],
+    "@typescript-eslint/no-use-before-define": [
+      "error"
+    ],
     "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/no-unsafe-assignment": "warn",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unsafe-call": "warn",
-    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-unsafe-argument": "warn",
+    "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/unbound-method": "off",
     "@typescript-eslint/no-unsafe-member-access": "warn",
-    "@typescript-eslint/restrict-template-expressions": ["warn", { "allowBoolean": true, "allowNumber": true }],
+    "@typescript-eslint/restrict-template-expressions": [
+      "warn",
+      {
+        "allowBoolean": true,
+        "allowNumber": true
+      }
+    ],
     "prefer-destructuring": "off",
     "prefer-template": "off",
     "react/destructuring-assignment": "off",
@@ -113,7 +142,9 @@
     "import/extensions": "off",
     "import/no-unresolved": "off",
     "import/prefer-default-export": "off",
-    "import/no-unused-modules": ["off"],
+    "import/no-unused-modules": [
+      "off"
+    ],
     "import/no-unassigned-import": "off",
     "import/no-extraneous-dependencies": [
       "error",
@@ -126,7 +157,9 @@
     "no-underscore-dangle": [
       "off",
       {
-        "allow": ["obj"],
+        "allow": [
+          "obj"
+        ],
         "allowFunctionParams": false,
         "allowAfterSuper": true,
         "allowAfterThis": true,
@@ -136,7 +169,9 @@
     ],
     "sort-keys": "off",
     "comma-dangle": "off",
-    "@typescript-eslint/comma-dangle": ["off"],
+    "@typescript-eslint/comma-dangle": [
+      "off"
+    ],
     "no-use-before-define": "off",
     "spaced-comment": "warn",
     "max-len": "off",
@@ -148,11 +183,19 @@
     "eslint linebreak-style": "off",
     "object-curly-newline": "off",
     "no-shadow": "off",
-    "no-void": ["error", { "allowAsStatement": true }]
+    "no-void": [
+      "error",
+      {
+        "allowAsStatement": true
+      }
+    ]
   },
   "overrides": [
     {
-      "files": ["*.test.ts", "*.test.tsx"],
+      "files": [
+        "*.test.ts",
+        "*.test.tsx"
+      ],
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off"
       }
