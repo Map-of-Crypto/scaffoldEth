@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { createConnectorForExternalContract, createConnectorForHardhatContract } from 'eth-hooks/context';
 
 import hardhatContractsJson from '../generated/hardhat_contracts.json';

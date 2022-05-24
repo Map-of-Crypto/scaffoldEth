@@ -18,12 +18,16 @@ const ProductCard: FC<any> = ({ product, merchant }) => {
       const res = await mapOfCrypto?.makePurchaseRequest(merchant.id, product.id);
       await message.success({
         content: (
-          <a
-            target="_blank"
-            title="Transaction hash"
-            href={`https://kovan.etherscan.io/tx/${res?.hash}`}
-            rel="noreferrer"
-          />
+          <span>
+            Success:{' '}
+            <a
+              target="_blank"
+              title="Transaction hash"
+              href={`https://kovan.etherscan.io/tx/${res?.hash}`}
+              rel="noreferrer">
+              Check transaction on etherscan
+            </a>
+          </span>
         ),
         duration: 5,
         key,
