@@ -45,6 +45,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     string memory _jobExternalAdapter
   ) ConfirmedOwner(msg.sender) {
     setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
+
     setChainlinkOracle(_oracle);
     ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
     jobId = _jobId;
@@ -142,6 +143,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   }
 
   // GET API DIRECT REQUEST Chainlink
+
   function getDataMerchantAPI(uint256 productId) public returns (bytes32) {
     Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(jobId), address(this), this.fullfillMerchantAPI.selector);
 
@@ -170,6 +172,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
     (, int256 price, , , ) = ethUsdFeed.latestRoundData();
     uint256 ethPrice = (_price * (10**4) * (10**18)) / uint256(price);
     purchase.ethPrice = ethPrice;
+
     purchase.productId = productId;
 
     purchase.deadline = block.timestamp + timeout;
