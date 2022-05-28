@@ -10,9 +10,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
     args: [
-      '0x74d40EAE0E54Ea30178625c111CEDBf9069e6189',
-      '0x9326BFA02ADD2366b30bacB125260Af641031331',
-      'e36caa3ff82e4ad6b6df65b01c6382b7',
+      '0x6A020c9A35D1022bC55450E9D6c847bc0deA9c73',
+      '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada',
+      '84ec9e2147734b22b4f371b74fda66ef',
       '66853ba406694258ab477e707675f0fa',
     ],
     log: true,
