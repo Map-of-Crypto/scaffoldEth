@@ -147,7 +147,7 @@ contract MapOfCrypto is ChainlinkClient, ConfirmedOwner, KeeperCompatibleInterfa
   function getDataMerchantAPI(uint256 productId) public returns (bytes32) {
     Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(jobId), address(this), this.fullfillMerchantAPI.selector);
 
-    string memory productURL = string(abi.encodePacked("https://mapofcrypto-cdppi36oeq-uc.a.run.app/products/", toString(productId)));
+    string memory productURL = string(abi.encodePacked("https://fakestoreapi.com/products", toString(productId)));
 
     req.add("productURL", productURL);
 
